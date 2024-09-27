@@ -25,13 +25,12 @@ const (
 	splitWeeks = 5
 )
 
-func SplitMonth() [splitWeeks]Dates {
-	start := StartNowMoth()
+func SplitMonth(start time.Time, end time.Time) [splitWeeks]Dates {
 	dates := [splitWeeks]Dates{}
 	for i := 0; i < splitWeeks; i++ {
 		if i == splitWeeks-1 {
 			dates[i].Start = start
-			dates[i].End = EndNowMonth()
+			dates[i].End = end
 			break
 		}
 		dates[i].Start = start

@@ -1,8 +1,12 @@
 package domain
 
-type SheetCells struct {
-	Name          string
-	CellNames     []string
-	LinksCellName string
-	Row           int
+type Cells struct {
+	Title     string
+	CellsName []string
+}
+
+type ExcelConfig struct {
+	FileName  string
+	SheetName string
+	Cells     []Cells
 }
