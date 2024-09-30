@@ -115,14 +115,14 @@ nextPosts:
 	return domain.Response{Response: vkData}, nil
 }
 
-func VkCountInMonth(items []domain.Item, dates [5]Dates) domain.VkCount {
-	vkc := domain.VkCount{}
+func VkCountInMonth(items []domain.Item, dates [5]Dates) domain.MonthPublishes {
+	vkc := domain.MonthPublishes{}
 	i := 4
 	for _, item := range items {
 		iDate := time.Unix(int64(item.Date), 0)
 		if (iDate.Compare(dates[i].Start) == 0 || iDate.Compare(dates[i].Start) == 1) && (iDate.Compare(dates[i].End) == -1 || iDate.Compare(dates[i].End) == 0) {
 			vkc.PostsCount[i] += 1
-			vkc.ViewsCount[i] += item.Likes.Count
+			vkc.LikesCount[i] += item.Likes.Count
 			vkc.CommentsCount[i] += item.Comments.Count
 			vkc.RepostsCount[i] += item.Reposts.Count
 			vkc.ViewsCount[i] += item.Views.Count
@@ -132,7 +132,7 @@ func VkCountInMonth(items []domain.Item, dates [5]Dates) domain.VkCount {
 				return vkc
 			}
 			vkc.PostsCount[i] += 1
-			vkc.ViewsCount[i] += item.Likes.Count
+			vkc.LikesCount[i] += item.Likes.Count
 			vkc.CommentsCount[i] += item.Comments.Count
 			vkc.RepostsCount[i] += item.Reposts.Count
 			vkc.ViewsCount[i] += item.Views.Count

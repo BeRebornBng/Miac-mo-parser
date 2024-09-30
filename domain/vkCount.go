@@ -1,6 +1,6 @@
 package domain
 
-type VkCount struct {
+type MonthPublishes struct {
 	PostsCount    [5]int
 	LikesCount    [5]int
 	CommentsCount [5]int

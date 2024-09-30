@@ -40,3 +40,32 @@ func SplitMonth(start time.Time, end time.Time) [splitWeeks]Dates {
 	}
 	return dates
 }
+
+func MonthToRussian(month time.Month) string {
+	switch month {
+	case time.January:
+		return "Январь"
+	case time.February:
+		return "Февраль"
+	case time.March:
+		return "Март"
+	case time.April:
+		return "Апрель"
+	case time.May:
+		return "Май"
+	case time.June:
+		return "Июнь"
+	case time.July:
+		return "Июль"
+	case time.August:
+		return "Август"
+	case time.September:
+		return "Сентябрь"
+	case time.October:
+		return "Октябрь"
+	case time.November:
+		return "Ноябрь"
+	default:
+		return "Декабрь"
+	}
+}
