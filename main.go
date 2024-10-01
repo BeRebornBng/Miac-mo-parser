@@ -179,10 +179,33 @@ func main() {
 		totalCommsFourWeek,
 		commsAvgFourWeek,
 		totalCommsMonth,
-	}}})
+	}},
+		{Sheet: repostsSheet, Title: []string{org,
+			link,
+			date,
+			repostsOne,
+			repostsTwo,
+			repostsThree,
+			repostsFour,
+			repostsLast,
+			totalRepostsFourWeek,
+			repostsAvgFourWeek,
+			totalRepostsMonth,
+		}},
+		{Sheet: viewsSheet, Title: []string{org,
+			link,
+			date,
+			viewsOne,
+			viewsTwo,
+			viewsThree,
+			viewsFour,
+			viewsLast,
+			totalViewsFourWeek,
+			viewsAvgFourWeek,
+			totalViewsMonth}}})
 
 	var err error
-	file, err := excelize.OpenFile(filename)
+	file, err := excelize.OpenFile(excelCfg.FileName)
 	if err != nil {
 		log.Fatalln(err)
 	}
