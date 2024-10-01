@@ -1,20 +1,18 @@
 package domain
 
-type Cells struct {
-	Title    string
-	CellName string
+type SheetCells struct {
+	Sheet string
+	Title []string
 }
 
 type ExcelConfig struct {
-	FileName string
-	Sheet    string
-	Cells    []Cells
+	FileName   string
+	SheetCells []SheetCells
 }
 
-func NewExcelConfig(filename string, sheet string, cells []Cells) *ExcelConfig {
+func NewExcelConfig(filename string, sheetCells []SheetCells) *ExcelConfig {
 	return &ExcelConfig{
-		FileName: filename,
-		Sheet:    sheet,
-		Cells:    cells,
+		FileName:   filename,
+		SheetCells: sheetCells,
 	}
 }
