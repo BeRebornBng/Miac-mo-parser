@@ -1,4 +1,4 @@
-package utils
+package vkClient
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Miac-mo-parser/domain"
+	"github.com/Miac-mo-parser/utils/dates"
 )
 
 func GetVkPosts(domains []string, start time.Time, end time.Time) ([]domain.Response, error) {
@@ -115,7 +116,7 @@ nextPosts:
 	return domain.Response{Response: vkData}, nil
 }
 
-func VkCountInMonth(items []domain.Item, dates [5]Dates) domain.MonthPublishes {
+func VkCountInMonth(items []domain.Item, dates [5]dates.MonthBorders) domain.MonthPublishes {
 	vkc := domain.MonthPublishes{}
 	i := 4
 	for _, item := range items {

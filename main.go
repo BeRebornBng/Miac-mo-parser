@@ -7,104 +7,15 @@ import (
 
 	"github.com/Miac-mo-parser/domain"
 	"github.com/Miac-mo-parser/utils"
+	"github.com/Miac-mo-parser/utils/dates"
+	"github.com/Miac-mo-parser/utils/excel"
 	"github.com/xuri/excelize/v2"
 )
 
-func mustConfig() string {
-	return ""
-}
-
-const (
-	org                  = "Организация"
-	link                 = "Ссылка"
-	date                 = "Дата публикации"
-	postsOne             = "Количество постов за 1 неделю"
-	postsTwo             = "Количество постов за 2 неделю"
-	postsThree           = "Количество постов за 3 неделю"
-	postsFour            = "Количество постов за 4 неделю"
-	postsLast            = "Количество постов за ост.дни"
-	totalPostsFourWeek   = "Всего постов за 4 недели"
-	postsAvgFourWeek     = "Постов в среднем за 4 недели"
-	totalPostsMonth      = "Всего постов за месяц"
-	likesOne             = "Количество лайков за 1 неделю"
-	likesTwo             = "Количество лайков за 2 неделю"
-	likesThree           = "Количество лайков за 3 неделю"
-	likesFour            = "Количество лайков за 4 неделю"
-	likesLast            = "Количество лайков за ост. дни"
-	totalLikesFourWeek   = "Всего лайков за 4 недели"
-	likesAvgFourWeek     = "Лайков в среднем за 4 недели"
-	totalLikesMonth      = "Всего лайков за месяц"
-	commsOne             = "Количество комментариев за 1 неделю"
-	commsTwo             = "Количество комментариев за 2 неделю"
-	commsThree           = "Количество комментариев за 3 неделю"
-	commsFour            = "Количество комментариев за 4 неделю"
-	commsLast            = "Количество комментариев за ост.дни"
-	totalCommsFourWeek   = "Всего комментариев за 4 недели"
-	commsAvgFourWeek     = "Комментариев в среднем за 4 недели"
-	totalCommsMonth      = "Всего комментариев за месяц"
-	repostsOne           = "Количество репостов за 1 неделю"
-	repostsTwo           = "Количество репостов за 2 неделю"
-	repostsThree         = "Количество репостов за 3 неделю"
-	repostsFour          = "Количество репостов за 4 неделю"
-	repostsLast          = "Количество репостов за ост.дни"
-	totalRepostsFourWeek = "Всего репостов за 4 недели"
-	repostsAvgFourWeek   = "Репостов в среднем за 4 недели"
-	totalRepostsMonth    = "Всего репостов за месяц"
-	viewsOne             = "Количество просмотров за 1 неделю"
-	viewsTwo             = "Количество просмотров за 2 неделю"
-	viewsThree           = "Количество просмотров за 3 неделю"
-	viewsFour            = "Количество просмотров за 4 неделю"
-	viewsLast            = "Количество просмотров за ост.дни"
-	totalViewsFourWeek   = "Всего просмотров за 4 недели"
-	viewsAvgFourWeek     = "Просмотров в среднем за 4 недели"
-	totalViewsMonth      = "Всего просмотров за месяц"
-)
-
-const (
-	filename = "Шаблон Госпаблики ВК.xlsx"
-)
-
-const (
-	orgSheet     = "Организации"
-	totalSheet   = "Общий свод"
-	postsSheet   = "Посты свод"
-	viewsSheet   = "Просмотры свод"
-	repostsSheet = "Репосты свод"
-	commsSheet   = "Комментарии свод"
-	likesSheet   = "Лайки свод"
-)
-
-const (
-	titleRow = 10
-	valueRow = 11
-)
-
-func columnNumber(s string) int {
-	n := len(s)
-	result := 0
-
-	for i := 0; i < n; i++ {
-		result *= 26                // Сдвигаем результат на разряд влево (умножаем на 26)
-		result += int(s[i]-'A') + 1 // Добавляем значение текущей буквы (A=1, B=2, ..., Z=26)
-	}
-
-	return result
-}
-
-func columnName(n int) string {
-	name := ""
-	for n > 0 {
-		n-- // уменьшаем на 1 для корректного вычисления (A=1)
-		remainder := n % 26
-		name = string('A'+remainder) + name // добавляем букву в начало строки
-		n /= 26                             // переходим к следующему разряду
-	}
-	return name
-}
-
 func main() {
 
-	excelCfg := domain.NewExcelConfig(filename, []domain.SheetCells{{Sheet: totalSheet, Title: []string{org,
+	excelCfg := domain.NewExcelConfig(filename, []domain.SheetCells{{Sheet: totalSheet, Title: []string{
+		org,
 		link,
 		date,
 		postsOne,
@@ -146,7 +57,8 @@ func main() {
 		viewsLast,
 		totalViewsFourWeek,
 		viewsAvgFourWeek,
-		totalViewsMonth}}, {Sheet: postsSheet, Title: []string{org,
+		totalViewsMonth}}, {Sheet: postsSheet, Title: []string{
+		org,
 		link,
 		date,
 		postsOne,
@@ -157,7 +69,8 @@ func main() {
 		totalPostsFourWeek,
 		postsAvgFourWeek,
 		totalPostsMonth,
-	}}, {Sheet: likesSheet, Title: []string{org,
+	}}, {Sheet: likesSheet, Title: []string{
+		org,
 		link,
 		date,
 		likesOne,
@@ -168,7 +81,8 @@ func main() {
 		totalLikesFourWeek,
 		likesAvgFourWeek,
 		totalLikesMonth,
-	}}, {Sheet: commsSheet, Title: []string{org,
+	}}, {Sheet: commsSheet, Title: []string{
+		org,
 		link,
 		date,
 		commsOne,
@@ -180,7 +94,8 @@ func main() {
 		commsAvgFourWeek,
 		totalCommsMonth,
 	}},
-		{Sheet: repostsSheet, Title: []string{org,
+		{Sheet: repostsSheet, Title: []string{
+			org,
 			link,
 			date,
 			repostsOne,
@@ -192,7 +107,8 @@ func main() {
 			repostsAvgFourWeek,
 			totalRepostsMonth,
 		}},
-		{Sheet: viewsSheet, Title: []string{org,
+		{Sheet: viewsSheet, Title: []string{
+			org,
 			link,
 			date,
 			viewsOne,
@@ -232,58 +148,55 @@ func main() {
 	// }
 
 	// получение названий МО из листа организаций
-	orgs, err := utils.ExcelParseColumnCells(file, orgSheet, columnName(1), valueRow)
+	_, err = excel.ExcelParseColumnCells(file, orgSheet, columnName(1), valueRow)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	// получение ссылок из листа организаций
-	links, err := utils.ExcelParseColumnCells(file, orgSheet, columnName(2), valueRow)
+	links, err := excel.ExcelParseColumnCells(file, orgSheet, columnName(2), valueRow)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	// получение доменов из ссылок
-	domains, err := utils.DomainsFromLinks(links)
+	_, err = utils.DomainsFromLinks(links)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	// все даты за год
-	start := utils.StartNowMoth()
-	end := utils.EndNowMonth()
-	var dates [12][5]utils.Dates
+	start := dates.StartNowMoth()
+	end := dates.EndNowMonth()
+	var dates [12][5]dates.MonthBorders
 	for i := 0; i < len(dates); i++ {
 		newStart := start.AddDate(0, -1*i, 0)
-		newEnd := end.AddDate(0, -1*i, 0)
-		if newStart.Month() == time.February {
-			newEnd = newEnd.AddDate(0, 0, -1)
-		}
-		dates[i] = utils.SplitMonth(newStart, newEnd)
+		newEnd := end.Add(time.Second).AddDate(0, -1*i, 0).Add(-time.Second)
+		fmt.Println(newStart, newEnd)
 	}
 
-	row := valueRow
-	for i, dom := range domains {
-		for _, date := range dates {
-			vkPosts, err := utils.GetVkPost(dom, date[0].Start, date[4].End)
-			if err != nil {
-				log.Fatalln(err)
-			}
-			vkCount := utils.VkCountInMonth(vkPosts.Response.Items, date)
+	// row := valueRow
+	// for i, dom := range domains {
+	// 	for _, date := range dates {
+	// 		vkPosts, err := utils.GetVkPost(dom, date[0].Start, date[4].End)
+	// 		if err != nil {
+	// 			log.Fatalln(err)
+	// 		}
+	// 		vkCount := utils.VkCountInMonth(vkPosts.Response.Items, date)
 
-			file.SetCellValue(totalSheet, "A1", orgs[i])
-			file.SetCellValue(totalSheet, "A2", dom)
-			file.SetCellValue(totalSheet, "A3", fmt.Sprintf("%s-%d", utils.MonthToRussian(date[0].Start.Month()), date[0].Start.Year()))
-			for i, j := columnNumber("D"), 1; i <= columnNumber("AQ"); i, j = i+1, j+1 {
-				if j == 4 {
-					file.SetCellFormula(totalSheet, fmt.Sprintf("%s%d", columnName(i+1), row), fmt.Sprintf("SUM(%s%d:%s%d)", columnName(i-4)))
-					file.SetCellFormula(totalSheet, fmt.Sprintf("%s%d", columnName(i+2), row), fmt.Sprintf("SUM(%s%d:%s%d)"))
-					file.SetCellFormula(totalSheet, fmt.Sprintf("%s%d", columnName(i+3), row), fmt.Sprintf("SUM(%s%d:%s%d)"))
-					j = -1
-					i += 2
-				}
-				file.SetCellValue(totalSheet, fmt.Sprintf("%s%d", columnName(i), i), vkCount.PostsCount[i-1])
-			}
-		}
-	}
-	file.Save()
+	// 		file.SetCellValue(totalSheet, "A1", orgs[i])
+	// 		file.SetCellValue(totalSheet, "A2", dom)
+	// 		file.SetCellValue(totalSheet, "A3", fmt.Sprintf("%s-%d", utils.MonthToRussian(date[0].Start.Month()), date[0].Start.Year()))
+	// 		for i, j := columnNumber("D"), 1; i <= columnNumber("AQ"); i, j = i+1, j+1 {
+	// 			if j == 4 {
+	// 				file.SetCellFormula(totalSheet, fmt.Sprintf("%s%d", columnName(i+1), row), fmt.Sprintf("SUM(%s%d:%s%d)", columnName(i-4)))
+	// 				file.SetCellFormula(totalSheet, fmt.Sprintf("%s%d", columnName(i+2), row), fmt.Sprintf("SUM(%s%d:%s%d)"))
+	// 				file.SetCellFormula(totalSheet, fmt.Sprintf("%s%d", columnName(i+3), row), fmt.Sprintf("SUM(%s%d:%s%d)"))
+	// 				j = -1
+	// 				i += 2
+	// 			}
+	// 			file.SetCellValue(totalSheet, fmt.Sprintf("%s%d", columnName(i), i), vkCount.PostsCount[i-1])
+	// 		}
+	// 	}
+	// }
+	// file.Save()
 
 	// row := valueRow
 	// for _, dom := range domains {

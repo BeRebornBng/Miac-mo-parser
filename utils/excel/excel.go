@@ -1,4 +1,4 @@
-package utils
+package excel
 
 import (
 	"fmt"
@@ -34,4 +34,27 @@ func ExcelSetCellsValue(file *excelize.File, sheet string, cellName []string, ro
 	file.SetCellFormula(sheet, fmt.Sprintf("%s%d", cellName[7], row), fmt.Sprintf("SUM(%s%d:%s%d)/4", cellName[2], row, cellName[5], row))
 	file.SetCellFormula(sheet, fmt.Sprintf("%s%d", cellName[8], row), fmt.Sprintf("SUM(%s%d:%s%d)", cellName[2], row, cellName[5], row))
 	file.SetCellFormula(sheet, fmt.Sprintf("%s%d", cellName[9], row), fmt.Sprintf("SUM(%s%d:%s%d)", cellName[2], row, cellName[6], row))
+}
+
+func ColumnNumber(s string) int {
+	n := len(s)
+	result := 0
+
+	for i := 0; i < n; i++ {
+		result *= 26                // Сдвигаем результат на разряд влево (умножаем на 26)
+		result += int(s[i]-'A') + 1 // Добавляем значение текущей буквы (A=1, B=2, ..., Z=26)
+	}
+
+	return result
+}
+
+func ColumnName(n int) string {
+	name := ""
+	for n > 0 {
+		n-- // уменьшаем на 1 для корректного вычисления (A=1)
+		remainder := n % 26
+		name = string('A'+remainder) + name // добавляем букву в начало строки
+		n /= 26                             // переходим к следующему разряду
+	}
+	return name
 }

@@ -1,10 +1,11 @@
-package utils
+package dates
 
 import (
+	"errors"
 	"time"
 )
 
-type Dates struct {
+type MonthBorders struct {
 	Start time.Time
 	End   time.Time
 }
@@ -22,13 +23,13 @@ func EndNowMonth() time.Time {
 }
 
 const (
-	splitWeeks = 5
+	monthParts = 5
 )
 
-func SplitMonth(start time.Time, end time.Time) [splitWeeks]Dates {
-	dates := [splitWeeks]Dates{}
-	for i := 0; i < splitWeeks; i++ {
-		if i == splitWeeks-1 {
+func SplitMonth(start time.Time, end time.Time) [monthParts]MonthBorders {
+	dates := [monthParts]MonthBorders{}
+	for i := 0; i < monthParts; i++ {
+		if i == monthParts-1 {
 			dates[i].Start = start
 			dates[i].End = end
 			break
@@ -41,31 +42,32 @@ func SplitMonth(start time.Time, end time.Time) [splitWeeks]Dates {
 	return dates
 }
 
-func MonthToRussian(month time.Month) string {
+func MonthToRussian(month time.Month) (string, error) {
 	switch month {
 	case time.January:
-		return "Январь"
+		return "Январь", nil
 	case time.February:
-		return "Февраль"
+		return "Февраль", nil
 	case time.March:
-		return "Март"
+		return "Март", nil
 	case time.April:
-		return "Апрель"
+		return "Апрель", nil
 	case time.May:
-		return "Май"
+		return "Май", nil
 	case time.June:
-		return "Июнь"
+		return "Июнь", nil
 	case time.July:
-		return "Июль"
+		return "Июль", nil
 	case time.August:
-		return "Август"
+		return "Август", nil
 	case time.September:
-		return "Сентябрь"
+		return "Сентябрь", nil
 	case time.October:
-		return "Октябрь"
+		return "Октябрь", nil
 	case time.November:
-		return "Ноябрь"
-	default:
-		return "Декабрь"
+		return "Ноябрь", nil
+	case time.December:
+		return "Декабрь", nil
 	}
+	return "", errors.New("месяц не найден")
 }
