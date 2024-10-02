@@ -1,8 +1,8 @@
 package domain
 
 type SheetCells struct {
-	Sheet string
-	Title []string
+	Sheet  string
+	Titles []string
 }
 
 type ExcelConfig struct {

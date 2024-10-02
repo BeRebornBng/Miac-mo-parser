@@ -123,21 +123,43 @@ func VkCountInMonth(items []domain.Item, dates [5]dates.MonthBorders) domain.Mon
 		iDate := time.Unix(int64(item.Date), 0)
 		if (iDate.Compare(dates[i].Start) == 0 || iDate.Compare(dates[i].Start) == 1) && (iDate.Compare(dates[i].End) == -1 || iDate.Compare(dates[i].End) == 0) {
 			vkc.PostsCount[i] += 1
-			vkc.LikesCount[i] += item.Likes.Count
-			vkc.CommentsCount[i] += item.Comments.Count
-			vkc.RepostsCount[i] += item.Reposts.Count
-			vkc.ViewsCount[i] += item.Views.Count
+			vkc.LikesCount[i] += float64(item.Likes.Count)
+			vkc.CommentsCount[i] += float64(item.Comments.Count)
+			vkc.RepostsCount[i] += float64(item.Reposts.Count)
+			vkc.ViewsCount[i] += float64(item.Views.Count)
+			vkc.LikesCount[5] += float64(item.Likes.Count)
+			vkc.CommentsCount[5] += float64(item.Comments.Count)
+			vkc.RepostsCount[5] += float64(item.Reposts.Count)
+			vkc.ViewsCount[5] += float64(item.Views.Count)
+			vkc.PostsCount[7] += 1
+			vkc.LikesCount[7] += float64(item.Likes.Count)
+			vkc.CommentsCount[7] += float64(item.Comments.Count)
+			vkc.RepostsCount[7] += float64(item.Reposts.Count)
+			vkc.ViewsCount[7] += float64(item.Views.Count)
 		} else {
 			i--
 			if i == -1 {
 				return vkc
 			}
 			vkc.PostsCount[i] += 1
-			vkc.LikesCount[i] += item.Likes.Count
-			vkc.CommentsCount[i] += item.Comments.Count
-			vkc.RepostsCount[i] += item.Reposts.Count
-			vkc.ViewsCount[i] += item.Views.Count
+			vkc.LikesCount[i] += float64(item.Likes.Count)
+			vkc.CommentsCount[i] += float64(item.Comments.Count)
+			vkc.RepostsCount[i] += float64(item.Reposts.Count)
+			vkc.ViewsCount[i] += float64(item.Views.Count)
+			vkc.PostsCount[7] += 1
+			vkc.LikesCount[7] += float64(item.Likes.Count)
+			vkc.CommentsCount[7] += float64(item.Comments.Count)
+			vkc.RepostsCount[7] += float64(item.Reposts.Count)
+			vkc.ViewsCount[7] += float64(item.Views.Count)
 		}
 	}
+	for i := 0; i < 4; i++ {
+		vkc.PostsCount[5] += vkc.PostsCount[i]
+	}
+	vkc.PostsCount[6] = vkc.PostsCount[5] / 4.0
+	vkc.LikesCount[6] = vkc.LikesCount[5] / 4.0
+	vkc.CommentsCount[6] = vkc.CommentsCount[5] / 4.0
+	vkc.RepostsCount[6] = vkc.RepostsCount[5] / 4.0
+	vkc.ViewsCount[6] = vkc.ViewsCount[5] / 4.0
 	return vkc
 }
