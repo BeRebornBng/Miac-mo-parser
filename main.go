@@ -333,59 +333,48 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		switch rs.Sheet {
-		case totalSheet:
-			if err := file.AddPivotTable(&excelize.PivotTableOptions{
-				DataRange:       fmt.Sprintf("%s!A%d:AQ%d", rs.Sheet, 15, row-1),
-				PivotTableRange: fmt.Sprintf("%s!A%d:AQ%d", "Динамика", 15, row-1),
-				Rows:            []excelize.PivotTableField{{Data: "Дата публикации", DefaultSubtotal: true}},
-				Filter:          []excelize.PivotTableField{{Data: "Организация", DefaultSubtotal: true}},
-				//Columns:         []excelize.PivotTableField{{Data: "Type", DefaultSubtotal: true}},
-				Data: []excelize.PivotTableField{{Data: "Постов в среднем за 4 недели", Name: "Постов в среднем"},
-					{Data: "Лайков в среднем за 4 недели", Name: "Лайков в среднем"},
-					{Data: "Репостов в среднем за 4 недели", Name: "Репостов в среднем"},
-					{Data: "Комментариев в среднем за 4 недели", Name: "Комментариев в среднем"},
-					{Data: "Просмотров в среднем за 4 недели", Name: "Просмотров в среднем"}},
-				RowGrandTotals: true,
-				ColGrandTotals: true,
-				ShowDrill:      true,
-				ShowRowHeaders: true,
-				ShowColHeaders: true,
-				ShowLastColumn: true,
-			}); err != nil {
-				fmt.Println(err)
-			}
-			break
-		case postsSheet:
-
-			break
-		case viewsSheet:
-
-			break
-		case repostsSheet:
-
-			break
-		case commsSheet:
-
-			break
-		case likesSheet:
-
-			break
-
-			// series := []excelize.ChartSeries{}
-			// for i := 15; i < row-1; i = i + monthCount {
-			// 	if i+monthCount > row-1 {
-			// 		break
-			// 	}
-			// 	series = append(series, excelize.ChartSeries{Name: "'" + rs.Sheet + "'" + fmt.Sprintf("!$C$%d:$C$%d", i, i+monthCount), Categories: "'" + rs.Sheet + "'" + fmt.Sprintf("!$C$%d:$C$%d", i, i+monthCount), Values: rs.Sheet + fmt.Sprintf("!$J$%d:$J$%d", i, i+monthCount)})
-			// }
-			// err = file.AddChart(rs.Sheet, "A1", &excelize.Chart{
-			// 	Type:   excelize.Col3DClustered,
-			// 	Title:  []excelize.RichTextRun{{Text: "В среднем лайков"}},
-			// 	Series: series,
-			// })
-		}
+		// series := []excelize.ChartSeries{}
+		// for i := 15; i < row-1; i = i + monthCount {
+		// 	if i+monthCount > row-1 {
+		// 		break
+		// 	}
+		// 	series = append(series, excelize.ChartSeries{Name: "'" + rs.Sheet + "'" + fmt.Sprintf("!$C$%d:$C$%d", i, i+monthCount), Categories: "'" + rs.Sheet + "'" + fmt.Sprintf("!$C$%d:$C$%d", i, i+monthCount), Values: rs.Sheet + fmt.Sprintf("!$J$%d:$J$%d", i, i+monthCount)})
+		// }
+		// err = file.AddChart(rs.Sheet, "A1", &excelize.Chart{
+		// 	Type:   excelize.Col3DClustered,
+		// 	Title:  []excelize.RichTextRun{{Text: "В среднем лайков"}},
+		// 	Series: series,
+		// })
 	}
+
+	if err := file.AddPivotTable(&excelize.PivotTableOptions{
+		Name:            "Свод",
+		DataRange:       fmt.Sprintf("%s!A%d:AQ%d", totalSheet, 15, row-1),
+		PivotTableRange: fmt.Sprintf("%s!A%d:AQ%d", "Динамика", 15, row-1),
+		Rows:            []excelize.PivotTableField{{Data: "Дата публикации", DefaultSubtotal: true}},
+		Filter:          []excelize.PivotTableField{{Data: "Организация", DefaultSubtotal: true}},
+		//Columns:         []excelize.PivotTableField{{Data: "Type", DefaultSubtotal: true}},
+		Data: []excelize.PivotTableField{{Data: "Постов в среднем за 4 недели", Name: "Постов в среднем"},
+			{Data: "Лайков в среднем за 4 недели", Name: "Лайков в среднем"},
+			{Data: "Репостов в среднем за 4 недели", Name: "Репостов в среднем"},
+			{Data: "Комментариев в среднем за 4 недели", Name: "Комментариев в среднем"},
+			{Data: "Просмотров в среднем за 4 недели", Name: "Просмотров в среднем"}},
+		RowGrandTotals: true,
+		ColGrandTotals: true,
+		ShowDrill:      true,
+		ShowRowHeaders: true,
+		ShowColHeaders: true,
+		ShowLastColumn: true,
+	}); err != nil {
+		fmt.Println(err)
+	}
+
+	err = file.AddChart("Динамика", "G1", &excelize.Chart{
+		Type:   excelize.Line3D,
+		Title:  []excelize.RichTextRun{{Text: "В среднем постов"}},
+		Series: []excelize.ChartSeries{{Name: "", Categories: "'Динамика'!$A$1:$A$15", Values: "'Динамика'!$B$1:$B$15"}},
+	})
+
 	file.SaveAs(reportCfg.FileName)
 	if err := file.DeleteSheet("Sheet1"); err != nil {
 		log.Println("Sheet 1 not founded")
