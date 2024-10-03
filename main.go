@@ -372,7 +372,7 @@ func main() {
 	err = file.AddChart("Динамика", "G1", &excelize.Chart{
 		Type:   excelize.Line3D,
 		Title:  []excelize.RichTextRun{{Text: "В среднем постов"}},
-		Series: []excelize.ChartSeries{{Name: "", Categories: "'Динамика'!$A$1:$A$15", Values: "'Динамика'!$B$1:$B$15"}},
+		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", row-1), Values: fmt.Sprintf("'Динамика'!$B$1:$B$%d", row-1)}},
 	})
 
 	file.SaveAs(reportCfg.FileName)
