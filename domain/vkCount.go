@@ -1,9 +1,9 @@
 package domain
 
 type MonthPublishes struct {
-	PostsCount    [8]float64
-	LikesCount    [8]float64
-	CommentsCount [8]float64
-	RepostsCount  [8]float64
-	ViewsCount    [8]float64
+	PostsCount    []float64
+	LikesCount    []float64
+	CommentsCount []float64
+	RepostsCount  []float64
+	ViewsCount    []float64
 }

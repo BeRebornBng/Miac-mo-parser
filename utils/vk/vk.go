@@ -89,8 +89,9 @@ nextPosts:
 		log.Fatalf("Ошибка при парсинге JSON: %v", err)
 	}
 	for _, item := range vkResponse.Response.Items {
+		fmt.Println(item.Text)
 		if item.Date <= int(start.Unix()) {
-			break
+			continue
 		}
 		if item.Date >= int(start.Unix()) && item.Date <= int(end.Unix()) {
 			vkItems = append(vkItems, item)
@@ -118,10 +119,17 @@ nextPosts:
 
 func VkCountInMonth(items []domain.Item, dates [5]dates.MonthBorders) domain.MonthPublishes {
 	vkc := domain.MonthPublishes{}
-	i := 4
+	i := 0
+	vkc.PostsCount = make([]float64, 8)
+	vkc.LikesCount = make([]float64, 8)
+	vkc.CommentsCount = make([]float64, 8)
+	vkc.RepostsCount = make([]float64, 8)
+	vkc.ViewsCount = make([]float64, 8)
 	for _, item := range items {
 		iDate := time.Unix(int64(item.Date), 0)
+		fmt.Println(iDate)
 		if (iDate.Compare(dates[i].Start) == 0 || iDate.Compare(dates[i].Start) == 1) && (iDate.Compare(dates[i].End) == -1 || iDate.Compare(dates[i].End) == 0) {
+			fmt.Println(iDate)
 			vkc.PostsCount[i] += 1
 			vkc.LikesCount[i] += float64(item.Likes.Count)
 			vkc.CommentsCount[i] += float64(item.Comments.Count)
@@ -137,10 +145,11 @@ func VkCountInMonth(items []domain.Item, dates [5]dates.MonthBorders) domain.Mon
 			vkc.RepostsCount[7] += float64(item.Reposts.Count)
 			vkc.ViewsCount[7] += float64(item.Views.Count)
 		} else {
-			i--
-			if i == -1 {
+			i++
+			if i == 5 {
 				return vkc
 			}
+			fmt.Println(iDate)
 			vkc.PostsCount[i] += 1
 			vkc.LikesCount[i] += float64(item.Likes.Count)
 			vkc.CommentsCount[i] += float64(item.Comments.Count)

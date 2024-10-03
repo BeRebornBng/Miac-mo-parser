@@ -19,15 +19,15 @@ import (
 // 	reportFileName   = "Госпаблики ВК.xlsx"
 // )
 
-// const (
-// 	orgSheet     = "Организации"
-// 	totalSheet   = "Общий_свод"
-// 	postsSheet   = "Посты_свод"
-// 	viewsSheet   = "Просмотры_свод"
-// 	repostsSheet = "Репосты_свод"
-// 	commsSheet   = "Комментарии_свод"
-// 	likesSheet   = "Лайки_свод"
-// )
+const (
+	orgSheet     = "Организации"
+	totalSheet   = "Общий_свод"
+	postsSheet   = "Посты_свод"
+	viewsSheet   = "Просмотры_свод"
+	repostsSheet = "Репосты_свод"
+	commsSheet   = "Комментарии_свод"
+	likesSheet   = "Лайки_свод"
+)
 
 // const (
 // 	titleRow = 10
@@ -192,11 +192,13 @@ func main() {
 		}},
 	})
 
+	// смотрим шаблонный файл
 	var err error
 	file, err := excelize.OpenFile(templateCfg.FileName)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	// получаем количество месяцев
 	monthStrCount, err := file.GetCellValue(templateCfg.SheetCells[0].Sheet, "C2")
 	if err != nil {
 		log.Fatalln(err)
@@ -223,8 +225,8 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println(domains, orgs)
 
+	// новый файл
 	file = excelize.NewFile()
 	for _, rs := range reportCfg.SheetCells {
 		file.NewSheet(rs.Sheet)
@@ -248,25 +250,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// Создаем стиль для значений
-	valueStyle := excelize.Style{
-		Font: &excelize.Font{
-			Family: "Calibri",
-			Size:   12,
-			Color:  "#000000", // Черный цвет
-		},
-		Alignment: &excelize.Alignment{
-			Horizontal: "center",
-			Vertical:   "center",
-			WrapText:   true, // Перенос слов
-		},
-	}
-	// Добавляем стили в файл Excel и получаем их ID
-	valueStyleID, err := file.NewStyle(&valueStyle)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(titleStyleID, valueStyleID)
 	// все даты за период
 	start := dates.StartNowMoth()
 	end := dates.EndNowMonth()
@@ -277,254 +260,126 @@ func main() {
 		monthBorders = append(monthBorders, dates.SplitMonth(newStart, newEnd))
 	}
 
-	//row := 16
-	for _, dom := range domains {
+	row := 16
+	for i, dom := range domains {
+		fmt.Println(dom)
 		for _, date := range monthBorders {
+
 			vkPosts, err := vkClient.GetVkPost(dom, date[0].Start, date[4].End)
 			if err != nil {
 				log.Fatalln(err)
 			}
-			_ = vkClient.VkCountInMonth(vkPosts.Response.Items, date)
-			for _, rs := range reportCfg.SheetCells {
-				file.SetSheetRow(rs.Sheet, "A1", &rs.Titles)
+			vkCount := vkClient.VkCountInMonth(vkPosts.Response.Items, date)
+			for _, item := range vkPosts.Response.Items {
+				time.Unix(int64(item.Date), 0)
 			}
+			for _, rs := range reportCfg.SheetCells {
+				height := 30.0
+				if err := file.SetRowHeight(rs.Sheet, row, height); err != nil {
+					panic(err)
+				}
+				file.SetCellStyle(rs.Sheet, fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("A")), 1), fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("AQ")), row), titleStyleID)
+				if err := file.SetColWidth(rs.Sheet, "A", "A", 60); err != nil {
+					panic(err)
+				}
+				if err := file.SetColWidth(rs.Sheet, "B", "B", 40); err != nil {
+					panic(err)
+				}
+				if err := file.SetColWidth(rs.Sheet, "C", "C", 30); err != nil {
+					panic(err)
+				}
+				if err := file.SetColWidth(rs.Sheet, "D", "AQ", 20); err != nil {
+					panic(err)
+				}
+				month, err := dates.MonthToRussian(date[0].Start.Month())
+				if err != nil {
+					log.Fatalln(err)
+				}
+				file.SetSheetRow(rs.Sheet, fmt.Sprintf("A%d", row), &[]interface{}{orgs[i], links[i], month})
+				switch rs.Sheet {
+				case totalSheet:
+					file.SetSheetRow(rs.Sheet, fmt.Sprintf("A%d", row), &[]interface{}{orgs[i], links[i], fmt.Sprintf("%s-%d", month, date[0].Start.Year())})
+					file.SetSheetRow(rs.Sheet, fmt.Sprintf("D%d", row), &vkCount.PostsCount)
+					file.SetSheetRow(rs.Sheet, fmt.Sprintf("L%d", row), &vkCount.LikesCount)
+					file.SetSheetRow(rs.Sheet, fmt.Sprintf("T%d", row), &vkCount.CommentsCount)
+					file.SetSheetRow(rs.Sheet, fmt.Sprintf("AB%d", row), &vkCount.RepostsCount)
+					file.SetSheetRow(rs.Sheet, fmt.Sprintf("AJ%d", row), &vkCount.ViewsCount)
+					break
+				case postsSheet:
+					file.SetSheetRow(rs.Sheet, fmt.Sprintf("D%d", row), &vkCount.PostsCount)
+					break
+				case viewsSheet:
+					file.SetSheetRow(rs.Sheet, fmt.Sprintf("D%d", row), &vkCount.ViewsCount)
+					break
+				case repostsSheet:
+					file.SetSheetRow(rs.Sheet, fmt.Sprintf("D%d", row), &vkCount.RepostsCount)
+					break
+				case commsSheet:
+					file.SetSheetRow(rs.Sheet, fmt.Sprintf("D%d", row), &vkCount.CommentsCount)
+					break
+				case likesSheet:
+					file.SetSheetRow(rs.Sheet, fmt.Sprintf("D%d", row), &vkCount.LikesCount)
+					break
+				}
+			}
+			row++
 		}
 	}
 
-	// row := valueRow
-	// for i, dom := range domains {
-	// 	for _, date := range monthBorders {
-	// 		vkPosts, err := vkClient.GetVkPost(dom, date[0].Start, date[4].End)
-	// 		if err != nil {
-	// 			log.Fatalln(err)
-	// 		}
-	// 		vkCount := vkClient.VkCountInMonth(vkPosts.Response.Items, date)
-	// 		var values []float64
-	// 		for j := 0; j < 8; j++ {
-	// 			values = append(values, vkCount.PostsCount[j])
-	// 		}
-	// 		for j := 0; j < 8; j++ {
-	// 			values = append(values, vkCount.LikesCount[j])
-	// 		}
-	// 		for j := 0; j < 8; j++ {
-	// 			values = append(values, vkCount.CommentsCount[j])
-	// 		}
-	// 		for j := 0; j < 8; j++ {
-	// 			values = append(values, vkCount.RepostsCount[j])
-	// 		}
-	// 		for j := 0; j < 8; j++ {
-	// 			values = append(values, vkCount.ViewsCount[j])
-	// 		}
-	// 		for t, j := excel.ColumnNumber("D"), 0; t <= excel.ColumnNumber("AQ"); t, j = t+1, j+1 {
-	// 			file.SetCellValue(totalSheet, fmt.Sprintf("%s%d", excel.ColumnName(t), row), values[j])
-	// 			file.SetCellValue(totalSheet, fmt.Sprintf("%s%d", excel.ColumnName(1), row), orgs[i])
-	// 			file.SetCellValue(totalSheet, fmt.Sprintf("%s%d", excel.ColumnName(2), row), links[i])
-	// 			month, err := dates.MonthToRussian(date[0].Start.Month())
-	// 			if err != nil {
-	// 				log.Fatalln(err)
-	// 			}
-	// 			file.SetCellValue(totalSheet, fmt.Sprintf("%s%d", excel.ColumnName(3), row), fmt.Sprintf("%s-%d", month, date[0].Start.Year()))
-	// 		}
-	// 		for t, j := excel.ColumnNumber("D"), 0; t <= excel.ColumnNumber("K"); t, j = t+1, j+1 {
-	// 			file.SetCellValue(postsSheet, fmt.Sprintf("%s%d", excel.ColumnName(t), row), vkCount.PostsCount[j])
-	// 			file.SetCellValue(postsSheet, fmt.Sprintf("%s%d", excel.ColumnName(1), row), orgs[i])
-	// 			file.SetCellValue(postsSheet, fmt.Sprintf("%s%d", excel.ColumnName(2), row), links[i])
-	// 			month, err := dates.MonthToRussian(date[0].Start.Month())
-	// 			if err != nil {
-	// 				log.Fatalln(err)
-	// 			}
-	// 			file.SetCellValue(postsSheet, fmt.Sprintf("%s%d", excel.ColumnName(3), row), fmt.Sprintf("%s-%d", month, date[0].Start.Year()))
-	// 		}
-	// 		for t, j := excel.ColumnNumber("D"), 0; t <= excel.ColumnNumber("K"); t, j = t+1, j+1 {
-	// 			file.SetCellValue(likesSheet, fmt.Sprintf("%s%d", excel.ColumnName(t), row), vkCount.LikesCount[j])
-	// 			file.SetCellValue(likesSheet, fmt.Sprintf("%s%d", excel.ColumnName(1), row), orgs[i])
-	// 			file.SetCellValue(likesSheet, fmt.Sprintf("%s%d", excel.ColumnName(2), row), links[i])
-	// 			month, err := dates.MonthToRussian(date[0].Start.Month())
-	// 			if err != nil {
-	// 				log.Fatalln(err)
-	// 			}
-	// 			file.SetCellValue(likesSheet, fmt.Sprintf("%s%d", excel.ColumnName(3), row), fmt.Sprintf("%s-%d", month, date[0].Start.Year()))
-	// 		}
-	// 		for t, j := excel.ColumnNumber("D"), 0; t <= excel.ColumnNumber("K"); t, j = t+1, j+1 {
-	// 			file.SetCellValue(commsSheet, fmt.Sprintf("%s%d", excel.ColumnName(t), row), vkCount.CommentsCount[j])
-	// 			file.SetCellValue(commsSheet, fmt.Sprintf("%s%d", excel.ColumnName(1), row), orgs[i])
-	// 			file.SetCellValue(commsSheet, fmt.Sprintf("%s%d", excel.ColumnName(2), row), links[i])
-	// 			month, err := dates.MonthToRussian(date[0].Start.Month())
-	// 			if err != nil {
-	// 				log.Fatalln(err)
-	// 			}
-	// 			file.SetCellValue(commsSheet, fmt.Sprintf("%s%d", excel.ColumnName(3), row), fmt.Sprintf("%s-%d", month, date[0].Start.Year()))
-	// 		}
-	// 		for t, j := excel.ColumnNumber("D"), 0; t <= excel.ColumnNumber("K"); t, j = t+1, j+1 {
-	// 			file.SetCellValue(repostsSheet, fmt.Sprintf("%s%d", excel.ColumnName(t), row), vkCount.RepostsCount[j])
-	// 			file.SetCellValue(repostsSheet, fmt.Sprintf("%s%d", excel.ColumnName(1), row), orgs[i])
-	// 			file.SetCellValue(repostsSheet, fmt.Sprintf("%s%d", excel.ColumnName(2), row), links[i])
-	// 			month, err := dates.MonthToRussian(date[0].Start.Month())
-	// 			if err != nil {
-	// 				log.Fatalln(err)
-	// 			}
-	// 			file.SetCellValue(repostsSheet, fmt.Sprintf("%s%d", excel.ColumnName(3), row), fmt.Sprintf("%s-%d", month, date[0].Start.Year()))
-	// 		}
-	// 		for t, j := excel.ColumnNumber("D"), 0; t <= excel.ColumnNumber("K"); t, j = t+1, j+1 {
-	// 			file.SetCellValue(viewsSheet, fmt.Sprintf("%s%d", excel.ColumnName(t), row), vkCount.ViewsCount[j])
-	// 			file.SetCellValue(viewsSheet, fmt.Sprintf("%s%d", excel.ColumnName(1), row), orgs[i])
-	// 			file.SetCellValue(viewsSheet, fmt.Sprintf("%s%d", excel.ColumnName(2), row), links[i])
-	// 			month, err := dates.MonthToRussian(date[0].Start.Month())
-	// 			if err != nil {
-	// 				log.Fatalln(err)
-	// 			}
-	// 			file.SetCellValue(viewsSheet, fmt.Sprintf("%s%d", excel.ColumnName(3), row), fmt.Sprintf("%s-%d", month, date[0].Start.Year()))
-	// 		}
-	// 		// Устанавливаем высоту для строк
-	// 		height := 30.0
-	// 		if err := file.SetRowHeight(totalSheet, row, height); err != nil {
-	// 			panic(err)
-	// 		}
-	// 		if err := file.SetRowHeight(postsSheet, row, height); err != nil {
-	// 			panic(err)
-	// 		}
-	// 		if err := file.SetRowHeight(likesSheet, row, height); err != nil {
-	// 			panic(err)
-	// 		}
-	// 		if err := file.SetRowHeight(repostsSheet, row, height); err != nil {
-	// 			panic(err)
-	// 		}
-	// 		if err := file.SetRowHeight(commsSheet, row, height); err != nil {
-	// 			panic(err)
-	// 		}
-	// 		if err := file.SetRowHeight(viewsSheet, row, height); err != nil {
-	// 			panic(err)
-	// 		}
-	// 		row++
-	// 	}
-	// }
+	for _, rs := range reportCfg.SheetCells {
+		err := file.AutoFilter(rs.Sheet, fmt.Sprintf("A%d:AQ%d", 15, row-1), nil)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		switch rs.Sheet {
+		case totalSheet:
+			if err := file.AddPivotTable(&excelize.PivotTableOptions{
+				DataRange:       fmt.Sprintf("A%d:AQ%d", 15, row-1),
+				PivotTableRange: fmt.Sprintf("A%d:AQ%d", 15, row-1),
+				Rows:            []excelize.PivotTableField{{Data: "Дата публикации", DefaultSubtotal: true}, {Data: "Year"}},
+				Filter:          []excelize.PivotTableField{{Data: "Организации"}},
+				//Columns:         []excelize.PivotTableField{{Data: "Type", DefaultSubtotal: true}},
+				Data:           []excelize.PivotTableField{{Data: "Постов в среднем за 4 недели", Name: "Постов в среднем"}},
+				RowGrandTotals: true,
+				ColGrandTotals: true,
+				ShowDrill:      true,
+				ShowRowHeaders: true,
+				ShowColHeaders: true,
+				ShowLastColumn: true,
+			}); err != nil {
+				fmt.Println(err)
+			}
+			break
+		case postsSheet:
 
-	// file.SetCellStyle(totalSheet, fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("A")), 1), fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("AQ")), row), styleID1)
-	// // Устанавливаем ширину для колонок A и B
-	// if err := file.SetColWidth(totalSheet, "A", "A", 60); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(totalSheet, "B", "B", 40); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(totalSheet, "C", "C", 30); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(totalSheet, "D", "AQ", 20); err != nil {
-	// 	panic(err)
-	// }
-	// file.SetCellStyle(postsSheet, fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("A")), 1), fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("AQ")), row), styleID1)
-	// // Устанавливаем ширину для колонок A и B
-	// if err := file.SetColWidth(postsSheet, "A", "A", 60); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(postsSheet, "B", "B", 40); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(postsSheet, "C", "C", 30); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(postsSheet, "D", "AQ", 20); err != nil {
-	// 	panic(err)
-	// }
-	// file.SetCellStyle(likesSheet, fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("A")), 1), fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("AQ")), row), styleID1)
-	// // Устанавливаем ширину для колонок A и B
-	// if err := file.SetColWidth(likesSheet, "A", "A", 60); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(likesSheet, "B", "B", 40); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(likesSheet, "C", "C", 30); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(likesSheet, "D", "AQ", 20); err != nil {
-	// 	panic(err)
-	// }
-	// file.SetCellStyle(viewsSheet, fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("A")), 1), fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("AQ")), row), styleID1)
-	// // Устанавливаем ширину для колонок A и B
-	// if err := file.SetColWidth(viewsSheet, "A", "A", 60); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(viewsSheet, "B", "B", 40); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(viewsSheet, "C", "C", 30); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(viewsSheet, "D", "AQ", 20); err != nil {
-	// 	panic(err)
-	// }
+			break
+		case viewsSheet:
 
-	// file.SetCellStyle(repostsSheet, fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("A")), 1), fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("AQ")), row), styleID1)
-	// // Устанавливаем ширину для колонок A и B
-	// if err := file.SetColWidth(repostsSheet, "A", "A", 60); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(repostsSheet, "B", "B", 40); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(repostsSheet, "C", "C", 30); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(repostsSheet, "D", "AQ", 20); err != nil {
-	// 	panic(err)
-	// }
-	// file.SetCellStyle(commsSheet, fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("A")), 1), fmt.Sprintf("%s%d", excel.ColumnName(excel.ColumnNumber("AQ")), row), styleID1)
-	// // Устанавливаем ширину для колонок A и B
-	// if err := file.SetColWidth(commsSheet, "A", "A", 60); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(commsSheet, "B", "B", 40); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(commsSheet, "C", "C", 20); err != nil {
-	// 	panic(err)
-	// }
-	// if err := file.SetColWidth(commsSheet, "D", "AQ", 20); err != nil {
-	// 	panic(err)
-	// }
+			break
+		case repostsSheet:
 
-	// sheetsArr := []string{totalSheet, likesSheet, postsSheet, repostsSheet, commsSheet, viewsSheet}
-	// for i, sheet := range sheetsArr {
-	// 	tableName := fmt.Sprintf("%s_%d", "Фильтр_даты_публикации", i)
-	// 	tableRange := fmt.Sprintf("%s%d:%s%d", excel.ColumnName(3), titleRow, excel.ColumnName(3), row-1)
-	// 	table := excelize.Table{
-	// 		Name:              tableName,
-	// 		Range:             tableRange,
-	// 		ShowFirstColumn:   false,
-	// 		ShowLastColumn:    false,
-	// 		ShowColumnStripes: false,
-	// 	}
-	// 	if err := file.AddTable(sheet, &table); err != nil {
-	// 		log.Fatalf("failed to add table: %v", err)
-	// 	}
+			break
+		case commsSheet:
 
-	// 	tableName2 := fmt.Sprintf("%s_%d", "Фильтр_организаций", i)
-	// 	tableRange2 := fmt.Sprintf("%s%d:%s%d", excel.ColumnName(1), titleRow, excel.ColumnName(1), row-1)
-	// 	table2 := excelize.Table{
-	// 		Name:              tableName2,
-	// 		Range:             tableRange2,
-	// 		ShowFirstColumn:   false,
-	// 		ShowLastColumn:    false,
-	// 		ShowColumnStripes: false,
-	// 	}
-	// 	if err := file.AddTable(sheet, &table2); err != nil {
-	// 		log.Fatalf("failed to add table: %v", err)
-	// 	}
-	// }
-	// series := []excelize.ChartSeries{}
-	// for i := 11; i < row-1; i++ {
-	// 	series = append(series, excelize.ChartSeries{Name: "'" + postsSheet + "'" + fmt.Sprintf("!$C$%d", i), Categories: "'" + postsSheet + "'" + fmt.Sprintf("!$C$%d", i), Values: postsSheet + fmt.Sprintf("!$J$%d", i)})
-	// }
-	// err = file.AddChart(postsSheet, "A1", &excelize.Chart{
-	// 	Type:   excelize.Col3DClustered,
-	// 	Title:  []excelize.RichTextRun{{Text: "Наываыва"}},
-	// 	Series: series,
-	// })
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
+			break
+		case likesSheet:
+
+			break
+
+			// series := []excelize.ChartSeries{}
+			// for i := 15; i < row-1; i = i + monthCount {
+			// 	if i+monthCount > row-1 {
+			// 		break
+			// 	}
+			// 	series = append(series, excelize.ChartSeries{Name: "'" + rs.Sheet + "'" + fmt.Sprintf("!$C$%d:$C$%d", i, i+monthCount), Categories: "'" + rs.Sheet + "'" + fmt.Sprintf("!$C$%d:$C$%d", i, i+monthCount), Values: rs.Sheet + fmt.Sprintf("!$J$%d:$J$%d", i, i+monthCount)})
+			// }
+			// err = file.AddChart(rs.Sheet, "A1", &excelize.Chart{
+			// 	Type:   excelize.Col3DClustered,
+			// 	Title:  []excelize.RichTextRun{{Text: "В среднем лайков"}},
+			// 	Series: series,
+			// })
+		}
+	}
 	file.SaveAs(reportCfg.FileName)
 	if err := file.DeleteSheet("Sheet1"); err != nil {
 		log.Println("Sheet 1 not founded")
