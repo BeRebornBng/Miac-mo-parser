@@ -326,6 +326,8 @@ func main() {
 		}
 	}
 
+	file.NewSheet("Динамика")
+
 	for _, rs := range reportCfg.SheetCells {
 		err := file.AutoFilter(rs.Sheet, fmt.Sprintf("A%d:AQ%d", 15, row-1), nil)
 		if err != nil {
@@ -334,12 +336,16 @@ func main() {
 		switch rs.Sheet {
 		case totalSheet:
 			if err := file.AddPivotTable(&excelize.PivotTableOptions{
-				DataRange:       fmt.Sprintf("A%d:AQ%d", 15, row-1),
-				PivotTableRange: fmt.Sprintf("A%d:AQ%d", 15, row-1),
-				Rows:            []excelize.PivotTableField{{Data: "Дата публикации", DefaultSubtotal: true}, {Data: "Year"}},
-				Filter:          []excelize.PivotTableField{{Data: "Организации"}},
+				DataRange:       fmt.Sprintf("%s!A%d:AQ%d", rs.Sheet, 15, row-1),
+				PivotTableRange: fmt.Sprintf("%s!A%d:AQ%d", "Динамика", 15, row-1),
+				Rows:            []excelize.PivotTableField{{Data: "Дата публикации", DefaultSubtotal: true}},
+				Filter:          []excelize.PivotTableField{{Data: "Организация", DefaultSubtotal: true}},
 				//Columns:         []excelize.PivotTableField{{Data: "Type", DefaultSubtotal: true}},
-				Data:           []excelize.PivotTableField{{Data: "Постов в среднем за 4 недели", Name: "Постов в среднем"}},
+				Data: []excelize.PivotTableField{{Data: "Постов в среднем за 4 недели", Name: "Постов в среднем"},
+					{Data: "Лайков в среднем за 4 недели", Name: "Лайков в среднем"},
+					{Data: "Репостов в среднем за 4 недели", Name: "Репостов в среднем"},
+					{Data: "Комментариев в среднем за 4 недели", Name: "Комментариев в среднем"},
+					{Data: "Просмотров в среднем за 4 недели", Name: "Просмотров в среднем"}},
 				RowGrandTotals: true,
 				ColGrandTotals: true,
 				ShowDrill:      true,
