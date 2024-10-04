@@ -349,16 +349,16 @@ func main() {
 
 	if err := file.AddPivotTable(&excelize.PivotTableOptions{
 		Name:            "Свод",
-		DataRange:       fmt.Sprintf("%s!A%d:AQ%d", totalSheet, 15, row-1),
-		PivotTableRange: fmt.Sprintf("%s!A%d:AQ%d", "Динамика", 15, row-1),
-		Rows:            []excelize.PivotTableField{{Data: "Дата публикации", DefaultSubtotal: true}},
-		Filter:          []excelize.PivotTableField{{Data: "Организация", DefaultSubtotal: true}},
+		DataRange:       fmt.Sprintf("%s!A%d:AQ%d", totalSheet, 15, 15+monthCount),
+		PivotTableRange: fmt.Sprintf("%s!A%d:AQ%d", "Динамика", 15, 15+monthCount),
+		Rows:            []excelize.PivotTableField{{Name: "Дата публикации", Data: "Дата публикации", DefaultSubtotal: true}},
+		Filter:          []excelize.PivotTableField{{Name: "Выбор организации", Data: "Организация", DefaultSubtotal: true}},
 		//Columns:         []excelize.PivotTableField{{Data: "Type", DefaultSubtotal: true}},
-		Data: []excelize.PivotTableField{{Data: "Постов в среднем за 4 недели", Name: "Постов в среднем"},
-			{Data: "Лайков в среднем за 4 недели", Name: "Лайков в среднем"},
-			{Data: "Репостов в среднем за 4 недели", Name: "Репостов в среднем"},
-			{Data: "Комментариев в среднем за 4 недели", Name: "Комментариев в среднем"},
-			{Data: "Просмотров в среднем за 4 недели", Name: "Просмотров в среднем"}},
+		Data: []excelize.PivotTableField{{Data: "Постов в среднем за 4 недели", Name: fmt.Sprintf("Постов в среднем за %d месяцев", monthCount)},
+			{Data: "Лайков в среднем за 4 недели", Name: fmt.Sprintf("Лайков в среднем за %d месяцев", monthCount)},
+			{Data: "Репостов в среднем за 4 недели", Name: fmt.Sprintf("Репостов в среднем за %d месяцев", monthCount)},
+			{Data: "Комментариев в среднем за 4 недели", Name: fmt.Sprintf("Комментариев в среднем за %d месяцев", monthCount)},
+			{Data: "Просмотров в среднем за 4 недели", Name: fmt.Sprintf("Просмотров в среднем за %d месяцев", monthCount)}},
 		RowGrandTotals: true,
 		ColGrandTotals: true,
 		ShowDrill:      true,
@@ -369,10 +369,30 @@ func main() {
 		fmt.Println(err)
 	}
 
-	err = file.AddChart("Динамика", "G1", &excelize.Chart{
-		Type:   excelize.Line3D,
-		Title:  []excelize.RichTextRun{{Text: "В среднем постов"}},
-		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", row-1), Values: fmt.Sprintf("'Динамика'!$B$1:$B$%d", row-1)}},
+	err = file.AddChart("Динамика", "H1", &excelize.Chart{
+		Type:   excelize.Line,
+		Title:  []excelize.RichTextRun{{Text: fmt.Sprintf("Постов в среднем за %d месяцев", monthCount)}},
+		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", 15+monthCount), Values: fmt.Sprintf("'Динамика'!$B$15:$B$%d", 15+monthCount)}},
+	})
+	err = file.AddChart("Динамика", "H15", &excelize.Chart{
+		Type:   excelize.Line,
+		Title:  []excelize.RichTextRun{{Text: fmt.Sprintf("Лайков в среднем за %d месяцев", monthCount)}},
+		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", 15+monthCount), Values: fmt.Sprintf("'Динамика'!$C$15:$C$%d", 15+monthCount)}},
+	})
+	err = file.AddChart("Динамика", "H30", &excelize.Chart{
+		Type:   excelize.Line,
+		Title:  []excelize.RichTextRun{{Text: fmt.Sprintf("Репостов в среднем за %d месяцев", monthCount)}},
+		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", 15+monthCount), Values: fmt.Sprintf("'Динамика'!$D$15:$D$%d", 15+monthCount)}},
+	})
+	err = file.AddChart("Динамика", "H45", &excelize.Chart{
+		Type:   excelize.Line,
+		Title:  []excelize.RichTextRun{{Text: fmt.Sprintf("Комментариев в среднем за %d месяцев", monthCount)}},
+		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", 15+monthCount), Values: fmt.Sprintf("'Динамика'!$E$15:$E$%d", 15+monthCount)}},
+	})
+	err = file.AddChart("Динамика", "H60", &excelize.Chart{
+		Type:   excelize.Line,
+		Title:  []excelize.RichTextRun{{Text: fmt.Sprintf("Просмотров в среднем за %d месяцев", monthCount)}},
+		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", 15+monthCount), Values: fmt.Sprintf("'Динамика'!$F$15:$F$%d", 15+monthCount)}},
 	})
 
 	file.SaveAs(reportCfg.FileName)
