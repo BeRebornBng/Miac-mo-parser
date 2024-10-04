@@ -333,24 +333,12 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		// series := []excelize.ChartSeries{}
-		// for i := 15; i < row-1; i = i + monthCount {
-		// 	if i+monthCount > row-1 {
-		// 		break
-		// 	}
-		// 	series = append(series, excelize.ChartSeries{Name: "'" + rs.Sheet + "'" + fmt.Sprintf("!$C$%d:$C$%d", i, i+monthCount), Categories: "'" + rs.Sheet + "'" + fmt.Sprintf("!$C$%d:$C$%d", i, i+monthCount), Values: rs.Sheet + fmt.Sprintf("!$J$%d:$J$%d", i, i+monthCount)})
-		// }
-		// err = file.AddChart(rs.Sheet, "A1", &excelize.Chart{
-		// 	Type:   excelize.Col3DClustered,
-		// 	Title:  []excelize.RichTextRun{{Text: "В среднем лайков"}},
-		// 	Series: series,
-		// })
 	}
 
 	if err := file.AddPivotTable(&excelize.PivotTableOptions{
 		Name:            "Свод",
-		DataRange:       fmt.Sprintf("%s!A%d:AQ%d", totalSheet, 15, 15+monthCount),
-		PivotTableRange: fmt.Sprintf("%s!A%d:AQ%d", "Динамика", 15, 15+monthCount),
+		DataRange:       fmt.Sprintf("%s!A%d:AQ%d", totalSheet, 15, row-1),
+		PivotTableRange: fmt.Sprintf("%s!A%d:AQ%d", "Динамика", 15, row-1),
 		Rows:            []excelize.PivotTableField{{Name: "Дата публикации", Data: "Дата публикации", DefaultSubtotal: true}},
 		Filter:          []excelize.PivotTableField{{Name: "Выбор организации", Data: "Организация", DefaultSubtotal: true}},
 		//Columns:         []excelize.PivotTableField{{Data: "Type", DefaultSubtotal: true}},
@@ -393,6 +381,15 @@ func main() {
 		Type:   excelize.Line,
 		Title:  []excelize.RichTextRun{{Text: fmt.Sprintf("Просмотров в среднем за %d месяцев", monthCount)}},
 		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", 15+monthCount), Values: fmt.Sprintf("'Динамика'!$F$15:$F$%d", 15+monthCount)}},
+	})
+
+	file.AddSlicer("Динамика", &excelize.SlicerOptions{
+		Name:       "Организация",
+		Cell:       "A15",
+		TableSheet: totalSheet,
+		TableName:  "Организация",
+		Width:      200,
+		Height:     200,
 	})
 
 	file.SaveAs(reportCfg.FileName)
