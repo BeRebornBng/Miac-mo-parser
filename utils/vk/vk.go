@@ -66,6 +66,7 @@ func GetVkPost(dom string, start time.Time, end time.Time) (domain.Response, err
 	offset := 0
 	vkData := domain.ResponseData{}
 	vkItems := make([]domain.Item, 0)
+
 nextPosts:
 	data := url.Values{
 		"access_token": {"9beebd669beebd669beebd663f98f01ac399bee9beebd66fd03b1233b2b354972bcd403"},
@@ -88,11 +89,9 @@ nextPosts:
 	if err != nil {
 		log.Fatalf("Ошибка при парсинге JSON: %v", err)
 	}
+
 	for _, item := range vkResponse.Response.Items {
-		fmt.Println(item.Text)
-		if item.Date <= int(start.Unix()) {
-			continue
-		}
+		// Проверяем дату публикации на соответствие диапазону [start; end]
 		if item.Date >= int(start.Unix()) && item.Date <= int(end.Unix()) {
 			vkItems = append(vkItems, item)
 		}
@@ -101,14 +100,15 @@ nextPosts:
 	// Проверка на то, что срез Items не пуст
 	if len(vkResponse.Response.Items) > 0 {
 		// Продолжаем проверку даты последнего элемента
-		if vkResponse.Response.Items[len(vkResponse.Response.Items)-1].Date >= int(start.Unix()) {
+		lastItemDate := vkResponse.Response.Items[len(vkResponse.Response.Items)-1].Date
+
+		// Если последний элемент находится в пределах нужного диапазона,
+		// продолжаем запрашивать дополнительные записи.
+		if lastItemDate >= int(start.Unix()) {
 			offset += count
-			if offset >= vkResponse.Response.Count {
-				vkData.Count = vkResponse.Response.Count
-				vkData.Items = vkItems
-				return domain.Response{Response: vkData}, nil
+			if offset < vkResponse.Response.Count {
+				goto nextPosts
 			}
-			goto nextPosts
 		}
 	}
 
@@ -119,56 +119,60 @@ nextPosts:
 
 func VkCountInMonth(items []domain.Item, dates [5]dates.MonthBorders) domain.MonthPublishes {
 	vkc := domain.MonthPublishes{}
-	i := 0
 	vkc.PostsCount = make([]float64, 8)
 	vkc.LikesCount = make([]float64, 8)
 	vkc.CommentsCount = make([]float64, 8)
 	vkc.RepostsCount = make([]float64, 8)
 	vkc.ViewsCount = make([]float64, 8)
+	for _, date := range dates {
+		fmt.Println(date)
+	}
+
 	for _, item := range items {
-		iDate := time.Unix(int64(item.Date), 0)
+		location, err := time.LoadLocation("Asia/Yekaterinburg")
+		if err != nil {
+			panic(err)
+		}
+		iDate := time.Unix(int64(item.Date), 0).In(location)
 		fmt.Println(iDate)
-		if (iDate.Compare(dates[i].Start) == 0 || iDate.Compare(dates[i].Start) == 1) && (iDate.Compare(dates[i].End) == -1 || iDate.Compare(dates[i].End) == 0) {
-			fmt.Println(iDate)
-			vkc.PostsCount[i] += 1
-			vkc.LikesCount[i] += float64(item.Likes.Count)
-			vkc.CommentsCount[i] += float64(item.Comments.Count)
-			vkc.RepostsCount[i] += float64(item.Reposts.Count)
-			vkc.ViewsCount[i] += float64(item.Views.Count)
-			vkc.LikesCount[5] += float64(item.Likes.Count)
-			vkc.CommentsCount[5] += float64(item.Comments.Count)
-			vkc.RepostsCount[5] += float64(item.Reposts.Count)
-			vkc.ViewsCount[5] += float64(item.Views.Count)
-			vkc.PostsCount[7] += 1
-			vkc.LikesCount[7] += float64(item.Likes.Count)
-			vkc.CommentsCount[7] += float64(item.Comments.Count)
-			vkc.RepostsCount[7] += float64(item.Reposts.Count)
-			vkc.ViewsCount[7] += float64(item.Views.Count)
-		} else {
-			i++
-			if i == 5 {
-				return vkc
+		for i := 0; i < len(dates); i++ {
+			fmt.Println(dates[i].Start, dates[i].End)
+			if (iDate.Equal(dates[i].Start) || iDate.After(dates[i].Start)) && (iDate.Before(dates[i].End) || iDate.Equal(dates[i].End)) {
+				// Увеличиваем счетчики для текущей недели
+				vkc.PostsCount[i]++
+				vkc.LikesCount[i] += float64(item.Likes.Count)
+				vkc.CommentsCount[i] += float64(item.Comments.Count)
+				vkc.RepostsCount[i] += float64(item.Reposts.Count)
+				vkc.ViewsCount[i] += float64(item.Views.Count)
+
+				// Увеличиваем общие счетчики
+				vkc.PostsCount[7]++
+				vkc.LikesCount[7] += float64(item.Likes.Count)
+				vkc.CommentsCount[7] += float64(item.Comments.Count)
+				vkc.RepostsCount[7] += float64(item.Reposts.Count)
+				vkc.ViewsCount[7] += float64(item.Views.Count)
+
 			}
-			fmt.Println(iDate)
-			vkc.PostsCount[i] += 1
-			vkc.LikesCount[i] += float64(item.Likes.Count)
-			vkc.CommentsCount[i] += float64(item.Comments.Count)
-			vkc.RepostsCount[i] += float64(item.Reposts.Count)
-			vkc.ViewsCount[i] += float64(item.Views.Count)
-			vkc.PostsCount[7] += 1
-			vkc.LikesCount[7] += float64(item.Likes.Count)
-			vkc.CommentsCount[7] += float64(item.Comments.Count)
-			vkc.RepostsCount[7] += float64(item.Reposts.Count)
-			vkc.ViewsCount[7] += float64(item.Views.Count)
 		}
 	}
+
+	// Подсчет средних значений для недель
 	for i := 0; i < 4; i++ {
+		if vkc.PostsCount[5] == 0 { // Чтобы избежать деления на ноль
+			continue
+		}
 		vkc.PostsCount[5] += vkc.PostsCount[i]
 	}
-	vkc.PostsCount[6] = vkc.PostsCount[5] / 4.0
-	vkc.LikesCount[6] = vkc.LikesCount[5] / 4.0
-	vkc.CommentsCount[6] = vkc.CommentsCount[5] / 4.0
-	vkc.RepostsCount[6] = vkc.RepostsCount[5] / 4.0
-	vkc.ViewsCount[6] = vkc.ViewsCount[5] / 4.0
+
+	if vkc.PostsCount[5] > 0 { // Проверка перед делением
+		for j := 6; j <= 6; j++ {
+			vkc.PostsCount[j] = vkc.PostsCount[5] / 4.0
+			vkc.LikesCount[j] = vkc.LikesCount[5] / 4.0
+			vkc.CommentsCount[j] = vkc.CommentsCount[5] / 4.0
+			vkc.RepostsCount[j] = vkc.RepostsCount[5] / 4.0
+			vkc.ViewsCount[j] = vkc.ViewsCount[5] / 4.0
+		}
+	}
+
 	return vkc
 }

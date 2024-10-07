@@ -270,9 +270,6 @@ func main() {
 				log.Fatalln(err)
 			}
 			vkCount := vkClient.VkCountInMonth(vkPosts.Response.Items, date)
-			for _, item := range vkPosts.Response.Items {
-				time.Unix(int64(item.Date), 0)
-			}
 			for _, rs := range reportCfg.SheetCells {
 				height := 30.0
 				if err := file.SetRowHeight(rs.Sheet, row, height); err != nil {
@@ -347,12 +344,14 @@ func main() {
 			{Data: "Репостов в среднем за 4 недели", Name: fmt.Sprintf("Репостов в среднем за %d месяцев", monthCount)},
 			{Data: "Комментариев в среднем за 4 недели", Name: fmt.Sprintf("Комментариев в среднем за %d месяцев", monthCount)},
 			{Data: "Просмотров в среднем за 4 недели", Name: fmt.Sprintf("Просмотров в среднем за %d месяцев", monthCount)}},
-		RowGrandTotals: true,
-		ColGrandTotals: true,
-		ShowDrill:      true,
-		ShowRowHeaders: true,
-		ShowColHeaders: true,
-		ShowLastColumn: true,
+		RowGrandTotals:    true,
+		ColGrandTotals:    true,
+		ShowDrill:         true,
+		ShowRowHeaders:    true,
+		ShowColHeaders:    true,
+		ShowLastColumn:    true,
+		UseAutoFormatting: true,
+		ShowColStripes:    true,
 	}); err != nil {
 		fmt.Println(err)
 	}
@@ -362,40 +361,98 @@ func main() {
 		Title:  []excelize.RichTextRun{{Text: fmt.Sprintf("Постов в среднем за %d месяцев", monthCount)}},
 		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", 15+monthCount), Values: fmt.Sprintf("'Динамика'!$B$15:$B$%d", 15+monthCount)}},
 	})
+	if err != nil {
+		panic(err)
+	}
 	err = file.AddChart("Динамика", "H15", &excelize.Chart{
 		Type:   excelize.Line,
 		Title:  []excelize.RichTextRun{{Text: fmt.Sprintf("Лайков в среднем за %d месяцев", monthCount)}},
 		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", 15+monthCount), Values: fmt.Sprintf("'Динамика'!$C$15:$C$%d", 15+monthCount)}},
 	})
+	if err != nil {
+		panic(err)
+	}
 	err = file.AddChart("Динамика", "H30", &excelize.Chart{
 		Type:   excelize.Line,
 		Title:  []excelize.RichTextRun{{Text: fmt.Sprintf("Репостов в среднем за %d месяцев", monthCount)}},
 		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", 15+monthCount), Values: fmt.Sprintf("'Динамика'!$D$15:$D$%d", 15+monthCount)}},
 	})
+	if err != nil {
+		panic(err)
+	}
 	err = file.AddChart("Динамика", "H45", &excelize.Chart{
 		Type:   excelize.Line,
 		Title:  []excelize.RichTextRun{{Text: fmt.Sprintf("Комментариев в среднем за %d месяцев", monthCount)}},
 		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", 15+monthCount), Values: fmt.Sprintf("'Динамика'!$E$15:$E$%d", 15+monthCount)}},
 	})
+	if err != nil {
+		panic(err)
+	}
 	err = file.AddChart("Динамика", "H60", &excelize.Chart{
 		Type:   excelize.Line,
 		Title:  []excelize.RichTextRun{{Text: fmt.Sprintf("Просмотров в среднем за %d месяцев", monthCount)}},
 		Series: []excelize.ChartSeries{{Name: "", Categories: fmt.Sprintf("'Динамика'!$A$15:$A$%d", 15+monthCount), Values: fmt.Sprintf("'Динамика'!$F$15:$F$%d", 15+monthCount)}},
 	})
+	if err != nil {
+		panic(err)
+	}
 
-	file.AddSlicer("Динамика", &excelize.SlicerOptions{
-		Name:       "Организация",
-		Cell:       "A15",
-		TableSheet: totalSheet,
-		TableName:  "Организация",
+	// if err := file.AddTable("Динамика", &excelize.Table{
+	// 	Name:  "Организация_таблица",
+	// 	Range: "A1:A30",
+	// }); err != nil {
+	// 	panic(err)
+	// }
+	file.SaveAs(reportCfg.FileName)
+	file, _ = excelize.OpenFile(reportCfg.FileName)
+	for _, rs := range reportCfg.SheetCells {
+		tables, _ := file.GetTables(rs.Sheet)
+		fmt.Println(tables)
+	}
+	tables, _ := file.GetTables("Динамика")
+	fmt.Println(tables)
+	tables, _ = file.GetTables("Свод")
+	fmt.Println(tables)
+	// if err := file.AddTable(totalSheet, &excelize.Table{
+	// 	Name:  "Организация_таблица",
+	// 	Range: "A15:A30",
+	// }); err != nil {
+	// 	panic(err)
+	// }
+	// file.SaveAs(reportCfg.FileName)
+	// tables, _ := file.GetTables(totalSheet)
+	// fmt.Println(tables)
+
+	// err = file.AddSlicer("Динамика", &excelize.SlicerOptions{
+	// 	Name:       "Организация",
+	// 	Cell:       "A1",
+	// 	TableSheet: totalSheet,
+	// 	TableName:  "Организация_таблица",
+	// 	Width:      200,
+	// 	Height:     200,
+	// })
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// Добавление сегмента для фильтра по организациям
+	err = file.AddSlicer("Динамика", &excelize.SlicerOptions{
+		Name:       "Выбор организации",
+		Cell:       "D5",
+		TableSheet: "Динамика",
+		TableName:  "Свод",
+		Caption:    "Фильтр по организациям",
 		Width:      200,
 		Height:     200,
 	})
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	file.SaveAs(reportCfg.FileName)
 	if err := file.DeleteSheet("Sheet1"); err != nil {
 		log.Println("Sheet 1 not founded")
 	}
 	file.SaveAs(reportCfg.FileName)
+	fmt.Println(file.GetTables("Динамика"))
 	log.Println("Отчет успешно сохранен в файл " + reportCfg.FileName)
 }

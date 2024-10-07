@@ -36,7 +36,7 @@ func SplitMonth(start time.Time, end time.Time) [monthParts]MonthBorders {
 		}
 		dates[i].Start = start
 		start = start.AddDate(0, 0, 6)
-		dates[i].End = start
+		dates[i].End = start.AddDate(0, 0, 1).Add(-time.Second)
 		start = start.AddDate(0, 0, 1)
 	}
 	return dates
